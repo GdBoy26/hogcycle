@@ -1,23 +1,21 @@
-from multiprocessing import Process, Semaphore
-import time
+import os
 
-sem = Semaphore(1)
+r, w = os.pipe()     # create pipe
 
-def worker(name):
-    sem.acquire()
-    print(name, "entered critical section")
-    time.sleep(1)
-    print(name, "leaving")
-    sem.release()
+pid = os.fork()
 
-p1 = Process(target=worker, args=("Process-1",))
-p2 = Process(target=worker, args=("Process-2",))
+if pid > 0:          # parent
+    os.close(r)
+    msg = b"Hello Child"
+    os.write(w, msg)
+    os.close(w)
 
-p1.start()
-p2.start()
+else:                # child
+    os.close(w)
+    output = os.read(r, 20)
+    print("Child received:", output.decode())
+    os.close(r)
 
-p1.join()
-p2.join()
 
 
 
